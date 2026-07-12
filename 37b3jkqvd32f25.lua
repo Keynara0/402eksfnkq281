@@ -1,7 +1,14 @@
+-- Jin Hub - EvoMon v1.0
+-- Error wrapper for loadstring compatibility
+local scriptSuccess, scriptError = pcall(function()
+
 local _version = "1.6.64-fix"
+print("[DEBUG] Step 1: Starting script...")
 local WindUI =
 	loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. _version .. "/main.lua"))()
+print("[DEBUG] Step 2: WindUI loaded")
 
+print("[DEBUG] Step 3: Adding theme...")
 WindUI:AddTheme({
 	Name = "JHyellow", -- Nama tema, dipanggil di CreateWindow dengan Theme = "JHyellow"
 
@@ -119,7 +126,9 @@ WindUI:AddTheme({
 	LabelBackground = Color3.fromHex("#ffffff"), -- Warna background label/paragraph (putih)
 	LabelBackgroundTransparency = 0.95, -- Background label sangat transparan
 })
+print("[DEBUG] Step 4: Theme added")
 
+print("[DEBUG] Step 5: Creating window...")
 local Window = WindUI:CreateWindow({
 	Title = "JinHub | Evomon",
 	Icon = "rbxassetid://72073171881829",
@@ -150,10 +159,12 @@ Window:DisableTopbarButtons({
 })
 
 Window:SetIconSize(38)
+print("[DEBUG] Step 6: Window created")
 
 --====================================================
 -- UNIVERSAL ANTI AFK
 --====================================================
+print("[DEBUG] Step 7: Setting up Anti-AFK...")
 
 local Players = game:GetService("Players")
 local VirtualUser = game:GetService("VirtualUser")
@@ -191,6 +202,7 @@ LocalPlayer.CharacterAdded:Connect(function()
 end)
 
 print("~Thanks For Use JinHub Script~")
+print("[DEBUG] Step 8: Creating tabs...")
 
 Window:Tag({ Title = "v1.0.0", Color = Color3.fromHex("#a6e3a1") })
 
@@ -275,11 +287,13 @@ ConfigTab = Window:Tab({
 	ShowTabTitle = true,
 	Border = true,
 })
+print("[DEBUG] Step 9: Tabs created")
 
 
 -- ============================================================
 -- BAGIAN INFO TAB
 -- ============================================================
+print("[DEBUG] Step 10: Creating Info tab content...")
 
 InfoTab:Paragraph({
 	Title = "🌟 Welcome to JinHub",
@@ -361,6 +375,7 @@ InfoTab:Paragraph({
 	Buttons = {},
 })
 
+print("[DEBUG] Step 11: Info tab done, getting game services...")
 
 local Players          = game:GetService("Players")
 local TweenService     = game:GetService("TweenService")
@@ -369,6 +384,8 @@ local RunService       = game:GetService("RunService")
 local ReplicatedStorage= game:GetService("ReplicatedStorage")
 local player           = Players.LocalPlayer
 local playerGui        = player:WaitForChild("PlayerGui")
+
+print("[DEBUG] Step 12: Services loaded, loading Runtime modules...")
 
 -- SECTION 2 — RUNTIME ACCESS LAYER
 local RS = ReplicatedStorage
@@ -573,6 +590,8 @@ end
 
 
 
+
+print("[DEBUG] Step 13: Runtime modules complete, creating HubState...")
 
 -- SECTION 3 — HUBSTATE + BATTLE LOOP
 local HubState = {
@@ -3480,6 +3499,8 @@ local function ballOptions(includeNone)
 end
 
 
+print("[DEBUG] Step 16: HubState created, creating Battle tab UI...")
+
 --====================================================
 -- BATTLE TAB
 --====================================================
@@ -5371,3 +5392,13 @@ if typeof(getgenv) == "function" then
 	getgenv().JinHub = HubState 
 end
 return HubState
+
+-- Close error wrapper from beginning of script
+end)
+
+if not scriptSuccess then
+	warn("[JinHub] Script load error: " .. tostring(scriptError))
+	error("[JinHub ERROR] " .. tostring(scriptError))
+end
+
+print("[DEBUG] Script loaded successfully!")
