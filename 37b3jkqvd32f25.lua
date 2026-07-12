@@ -4184,3 +4184,1190 @@ local lockShinyT = MiscTab:Toggle({
 		HubState.toggles.autoLockShiny = v 
 	end 
 })
+
+local lockPrismT = MiscTab:Toggle({ 
+	Title = "Lock Prismatic", 
+	Desc = "Native-lock all prismatic pets", 
+	Flag = "mat_lock",
+	Value = false,
+	Callback = function(v) 
+		HubState.toggles.autoLockPrismatic = v 
+	end 
+})
+
+local lockSSST = MiscTab:Toggle({ 
+	Title = "Lock SSS Talent", 
+	Desc = "Native-lock all SSS-talent pets",
+	Flag = "sss_lock",
+	Value = false,
+	Callback = function(v) 
+		HubState.toggles.autoLockSSS = v 
+	end 
+})
+
+MiscTab:Button({ 
+	Title = "Lock Matching Now", 
+	Callback = function()
+		local hasRule = HubState.toggles.autoLockShiny 
+			or HubState.toggles.autoLockPrismatic 
+			or HubState.toggles.autoLockSSS
+		if not hasRule then
+			HubState._notify("Enable a lock rule first", "err")
+			return
+		end
+		HubState._notify("Locking matching pets...", "ok")
+		task.spawn(function()
+			local n = HubState.Feature.lockMatchingNow()
+			HubState._notify("Locked "..n.." pets", "ok")
+		end)
+	end 
+})
+
+--=================================================================
+-- Keep & Auto Release (Direct WindUI API)
+--=================================================================
+MiscTab:Divider()
+
+MiscTab:Section({
+	Title = "Keep & Release",
+	Icon = "shield-cog-corner",
+	TextSize = 19,
+	TextXAlignment = "Left",
+	Box = false,
+	BoxBorder = false,
+	Opened = false,
+	FontWeight = Enum.FontWeight.SemiBold,
+	TextTransparency = 0.05
+})
+
+local keepShinyT = MiscTab:Toggle({ 
+	Title = "Keep Shiny", 
+	Desc = "Never release shiny pets", 
+	Flag = "shy_kep",
+	Value = false,
+	Callback = function(v) 
+		HubState.toggles.keepShiny = v 
+	end 
+})
+
+local keepPrismT = MiscTab:Toggle({ 
+	Title = "Keep Prismatic", 
+	Desc = "Never release prismatic pets", 
+	Flag = "keep_prs",
+	Value = false,
+	Callback = function(v) 
+		HubState.toggles.keepPrismatic = v 
+	end 
+})
+
+local GRADES = { "C","B","A","S","SSS" }
+for _, g in ipairs(GRADES) do
+	MiscTab:Toggle({ 
+		Title = "Keep Grade "..g, 
+		Desc = "Never release "..g.."-talent pets", 
+		AllowNone = true,
+		Value = false,
+		Flag = "grde_kep",
+		Callback = function(v) 
+			HubState.toggles.keepGrades[g] = v and true or nil 
+		end 
+	})
+end
+
+local relTgl = MiscTab:Toggle({ 
+	Title = "Auto Release", 
+	Desc = "Release pets not locked",
+	Flag = "ato_reale",
+	Value = false,
+	Callback = function(v)
+		HubState.toggles.autoRelease = v
+		if v then 
+			HubState.Feature.startReleaseLoop()
+			HubState._notify("Auto Release ON — check keep rules!", "err")
+		else 
+			HubState._notify("Auto Release OFF", nil) 
+		end
+	end 
+})
+
+--================================================
+-- auto tab (Direct WindUI API)
+--================================================
+QuestTab:Section({
+	Title = "Main Quest",
+	Icon = "message-circle-question-mark",
+	TextSize = 19,
+	TextXAlignment = "Left",
+	Box = false,
+	BoxBorder = false,
+	Opened = false,
+	FontWeight = Enum.FontWeight.SemiBold,
+	TextTransparency = 0.05
+})
+
+local doQT = QuestTab:Toggle({ 
+	Title = "Auto Do Quest", 
+	Desc = "Drives quests: fights quest NPCs/bosses, farms, hunts, chests, tower. Auto-claims too.",
+	Flag = "do_qes",
+	Value = false,
+	Callback = function(v)
+		HubState.toggles.autoDoQuest = v
+		if v then
+			HubState.toggles.autoClaimQuests = true
+			local controls = HubState._configControls.autoClaimQuests
+			if controls then
+				pcall(function() 
+					controls.handle:Set(true, false) 
+				end)
+			end
+			HubState.Feature.startQuestLoop()
+			HubState._notify("Auto Do Quest ON", "ok")
+		else
+			HubState._notify("Auto Do Quest OFF", nil)
+		end
+	end 
+})
+
+local claimQT = QuestTab:Toggle({ 
+	Title = "Auto Claim Quests", 
+	Desc = "Claim completed quests", 
+	Flag = "quest_compl",
+	Value = false,
+	Callback = function(v) 
+		HubState.toggles.autoClaimQuests = v
+		if v then 
+			HubState.Feature.startQuestLoop()
+			HubState._notify("Auto Claim Quests ON", "ok")
+		else 
+			HubState._notify("Auto Claim Quests OFF", nil)
+		end 
+	end 
+})
+
+--====================================================
+-- REWARDS
+--====================================================
+
+QuestTab:Section({
+	Title = "Miscellaneous",
+	Icon = "sparkles",
+	TextSize = 19,
+	TextXAlignment = "Left",
+	Box = false,
+	BoxBorder = false,
+	Opened = false,
+	FontWeight = Enum.FontWeight.SemiBold,
+	TextTransparency = 0.05
+})
+
+--================ UI =================
+local bpTgl = QuestTab:Toggle({ 
+	Title="Auto Claim Battlepass",
+	Flag = "clai_batt",
+	Value=false,
+	Callback=function(v) 
+		HubState.toggles.autoClaimBattlepass=v
+		if v then HubState.Feature.startRewardsLoop() end 
+	end 
+})
+
+local lvlTgl = QuestTab:Toggle({ 
+	Title="Auto Claim Level Reward", 
+	Flag = "clai_lvl",
+	Value=false,
+	Callback=function(v) 
+		HubState.toggles.autoClaimLevel=v
+		if v then HubState.Feature.startRewardsLoop() end 
+	end 
+})
+
+local idxTgl = QuestTab:Toggle({ 
+	Title="Auto Claim Index Reward", 
+	Flag = "aut_index",
+	Value=false,
+	Callback=function(v) 
+		HubState.toggles.autoClaimIndex=v
+		if v then HubState.Feature.startRewardsLoop() end 
+	end 
+})
+
+QuestTab:Button({ 
+	Title="Claim All Rewards Now", 
+	Callback=function() HubState.Feature.claimAllRewardsNow() end 
+})
+
+QuestTab:Button({
+	Title = "Claim All Chests",
+	Callback = function()
+		HubState.Feature.claimAllChests()
+	end
+})
+
+--===================================================
+-- Tower (Direct WindUI API - Clean)
+--===================================================
+TowerTab:Section({
+	Title = "Tower",
+	Icon = "sparkles",
+	TextSize = 19,TextXAlignment = "Left",Box = false,BoxBorder = false,
+	Opened = false,FontWeight = Enum.FontWeight.SemiBold,TextTransparency = 0.05,
+})
+
+local towerLayerSlider = TowerTab:Slider({
+	Title = "Start Layer",
+	Value = { 
+		Min = 1, 
+		Max = 200, 
+		Default = HubState.toggles.towerStartLayer or 1 
+	},
+	Step = 1,
+	Flag = "Ety_laye",
+	Callback = function(v) 
+		HubState.toggles.towerStartLayer = v 
+	end
+})
+
+local towerExitT = TowerTab:Toggle({
+	Title = "Exit on Loss",
+	Desc = "Leave the tower after a lost floor",
+	Flag = "llos_exit",
+	Value = false,
+	Callback = function(v) 
+		HubState.toggles.towerExitOnLoss = v 
+	end
+})
+
+local towerTgl = TowerTab:Toggle({
+	Title = "Auto Tower",
+	Desc = "Enter & auto-fight floors",
+	Flag = "twr_aut",
+	Value = false,
+	Callback = function(v)
+		HubState.toggles.towerEnabled = v
+		if v then
+			if not HubState.toggles.autoSkill then 
+				HubState.toggles.autoSkill = true
+				if Toggles.autoSkill then 
+					Toggles.autoSkill:Set(true, false) 
+				end
+			end
+			HubState.Feature.startTowerLoop()
+			HubState._notify("Auto Tower ON", "ok")
+		else 
+			HubState._notify("Auto Tower OFF", nil)
+		end
+	end
+})
+
+
+--====================================================
+-- UTILITY TAB BAGIAN FPS BOOST
+--====================================================
+local FPSSection = UtilityTab:Section({
+	Title = "FPS Boost",
+	Icon = "solar:rocket-2-bold",
+	IconColor = Color3.fromRGB(120, 140, 255),
+	TextSize = 18,
+	Box = true,
+	BoxBorder = true,
+	Opened = true,
+})
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local VIM = game:GetService("VirtualInputManager")
+
+local antiAfkEnabled = false
+local clickInterval = 60 
+local lastClickTime = 0
+
+
+local function getCenterScreen()
+	local vp = workspace.CurrentCamera.ViewportSize
+	return Vector2.new(
+		math.floor(vp.X / 2) - 260, 
+		math.floor(vp.Y / 2) + 130 
+	)
+end
+
+local function realScreenClick()
+	local center = getCenterScreen()
+
+	pcall(function()
+		VIM:SendMouseButtonEvent(center.X, center.Y, 0, true, game, 0)
+		task.wait(0.1)
+		VIM:SendMouseButtonEvent(center.X, center.Y, 0, false, game, 0)
+	end)
+
+	pcall(function()
+		VIM:SendTouchEvent(center.X, center.Y, Enum.UserInputType.Touch, Enum.UserInputState.Begin, 1)
+		task.wait(0.1)
+		VIM:SendTouchEvent(center.X, center.Y, Enum.UserInputType.Touch, Enum.UserInputState.End, 1)
+	end)
+end
+
+local function resetAfkState()
+	pcall(function()
+		VIM:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+		task.wait(0.1)
+		VIM:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+	end)
+end
+
+RunService.Heartbeat:Connect(function()
+	if not antiAfkEnabled then
+		return
+	end
+
+	local now = tick()
+	if now - lastClickTime >= clickInterval then
+		lastClickTime = now
+		realScreenClick()
+	end
+end)
+
+local lastResetTime = 0
+RunService.Heartbeat:Connect(function()
+	if not antiAfkEnabled then
+		return
+	end
+
+	local now = tick()
+	if now - lastResetTime >= 60 then
+		lastResetTime = now
+		resetAfkState()
+	end
+end)
+
+--=============================================
+local Lighting = game:GetService("Lighting")
+local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
+
+local FPSBoost = false
+local FPSMode = "Safe"
+
+local OriginalLighting = {}
+local OptimizedObjects = {}
+local Connections = {}
+
+local function SaveLighting()
+	OriginalLighting = {
+		GlobalShadows = Lighting.GlobalShadows,
+		Brightness = Lighting.Brightness,
+		FogStart = Lighting.FogStart,
+		FogEnd = Lighting.FogEnd,
+		EnvironmentDiffuseScale = Lighting.EnvironmentDiffuseScale,
+		EnvironmentSpecularScale = Lighting.EnvironmentSpecularScale,
+		Technology = Lighting.Technology,
+	}
+end
+
+local function RestoreLighting()
+	for k, v in pairs(OriginalLighting) do
+		pcall(function()
+			Lighting[k] = v
+		end)
+	end
+end
+
+local function optimizeObject(obj)
+	if OptimizedObjects[obj] then
+		return
+	end
+	OptimizedObjects[obj] = true
+
+	if obj:IsA("BasePart") then
+		obj.Material = Enum.Material.Plastic
+		obj.CastShadow = false
+		obj.Reflectance = 0
+
+		if FPSMode == "Ultra Extreme" then
+			obj.Transparency = obj.Transparency > 0 and obj.Transparency or 0
+		end
+	elseif obj:IsA("Decal") or obj:IsA("Texture") then
+		if FPSMode ~= "Safe" then
+			obj.Transparency = 1
+		end
+	elseif
+		obj:IsA("ParticleEmitter")
+		or obj:IsA("Trail")
+		or obj:IsA("Smoke")
+		or obj:IsA("Fire")
+		or obj:IsA("Sparkles")
+	then
+		obj.Enabled = false
+	end
+end
+
+local function ApplyMode()
+	if not FPSBoost then
+		return
+	end
+
+	-- disable post effects (ANTI BLUR / GHOSTING)
+	for _, v in ipairs(Lighting:GetChildren()) do
+		if v:IsA("PostEffect") then
+			v.Enabled = false
+		end
+	end
+
+	-- lighting preset
+	if FPSMode == "Ultra Extreme" then
+		Lighting.GlobalShadows = false
+		Lighting.Brightness = 1
+		Lighting.FogStart = 1e9
+		Lighting.FogEnd = 1e9
+		Lighting.EnvironmentDiffuseScale = 0
+		Lighting.EnvironmentSpecularScale = 0
+		Lighting.Technology = Enum.Technology.Compatibility
+	elseif FPSMode == "Extreme" then
+		Lighting.GlobalShadows = false
+		Lighting.Brightness = 1.5
+		Lighting.FogStart = 1e7
+		Lighting.FogEnd = 1e7
+		Lighting.EnvironmentDiffuseScale = 0
+		Lighting.EnvironmentSpecularScale = 0
+	elseif FPSMode == "Medium" then
+		Lighting.GlobalShadows = false
+		Lighting.Brightness = 2
+		Lighting.FogStart = 1000
+		Lighting.FogEnd = 100000
+		Lighting.EnvironmentDiffuseScale = 0.2
+		Lighting.EnvironmentSpecularScale = 0.2
+	elseif FPSMode == "Safe" then
+		RestoreLighting()
+	end
+
+	-- optimize existing objects ONCE
+	for _, obj in ipairs(Workspace:GetDescendants()) do
+		optimizeObject(obj)
+	end
+end
+
+local function EnableBoost()
+	SaveLighting()
+	ApplyMode()
+
+	-- incremental optimization (NO SPIKE)
+	Connections.DescendantAdded = Workspace.DescendantAdded:Connect(function(obj)
+		if FPSBoost then
+			optimizeObject(obj)
+		end
+	end)
+end
+
+local function DisableBoost()
+	RestoreLighting()
+	OptimizedObjects = {}
+
+	for _, c in pairs(Connections) do
+		pcall(function()
+			c:Disconnect()
+		end)
+	end
+	Connections = {}
+end
+
+--UI DROPDOWN
+FPSSection:Dropdown({
+	Title = "FPS Boost Mode",
+	Values = { "Safe", "Medium", "Extreme" },
+	Default = "Safe",
+	Flag = "fps_boost_mode",
+	Callback = function(v)
+		FPSMode = v
+		if FPSBoost then
+			ApplyMode()
+		end
+	end,
+})
+
+--UI TOGGLE
+FPSSection:Toggle({
+	Title = "Enable FPS Boost",
+	Default = false,
+	Flag = "fps_boost",
+	Callback = function(v)
+		FPSBoost = v
+		if v then
+			EnableBoost()
+		else
+			DisableBoost()
+		end
+	end,
+})
+
+RunService.Stepped:Connect(function()
+	if FPSBoost and FPSMode == "Ultra Extreme" then
+		collectgarbage("step", 50)
+	end
+end)
+
+UtilityTab:Divider()
+
+--========================================================
+-- BAGIAN DISABLE 3D
+--========================================================
+local FPS2Section = UtilityTab:Section({
+	Title = "3D Rendering",
+	Icon = "box",
+	IconColor = Color3.fromRGB(120, 140, 255),
+	TextSize = 18,
+	Box = true,
+	BoxBorder = true,
+	Opened = true,
+})
+
+local RunService = game:GetService("RunService")
+
+local G = getgenv()
+G.__JIN_NO3D_ON = (G.__JIN_NO3D_ON ~= nil) and G.__JIN_NO3D_ON or false
+G.__JIN_NO3D_TOGGLE = G.__JIN_NO3D_TOGGLE
+
+local function notify(msg, icon, dur)
+	if WindUI then
+		WindUI:Notify({ Title = "3D Render", Content = tostring(msg), Icon = icon or "monitor", Duration = dur or 1.2 })
+	end
+end
+
+local function apply3DDisabled(on)
+	G.__JIN_NO3D_ON = on
+	-- sinkron UI toggle kalau ada
+	local t = G.__JIN_NO3D_TOGGLE
+	if t then
+		pcall(function()
+			if t.Set then
+				t:Set(on)
+			elseif t.SetValue then
+				t:SetValue(on)
+			elseif t.Toggle then
+				t:Toggle(on)
+			elseif t.Update then
+				t:Update(on)
+			end
+		end)
+	end
+
+	if on then
+		pcall(function()
+			RunService:Set3dRenderingEnabled(false)
+		end)
+	else
+		pcall(function()
+			RunService:Set3dRenderingEnabled(true)
+		end)
+	end
+end
+
+-- Toggle UI
+do
+	local toggle = FPS2Section:Toggle({
+		Title = "Disable 3D Rendering",
+		Flag = "Disable_Rendering",
+		Default = G.__JIN_NO3D_ON,
+		Callback = function(state)
+			apply3DDisabled(state)
+		end,
+	})
+	G.__JIN_NO3D_TOGGLE = toggle
+	-- Sinkron saat re-exec
+	pcall(function()
+		if toggle then
+			if toggle.Set then
+				toggle:Set(G.__JIN_NO3D_ON)
+			elseif toggle.SetValue then
+				toggle:SetValue(G.__JIN_NO3D_ON)
+			elseif toggle.Toggle then
+				toggle:Toggle(G.__JIN_NO3D_ON)
+			elseif toggle.Update then
+				toggle:Update(G.__JIN_NO3D_ON)
+			end
+		end
+	end)
+end
+
+-- Terapkan state saat ini (agar persistent)
+apply3DDisabled(G.__JIN_NO3D_ON)
+
+--========================================================
+--BAGIAN BLACK SCREEN
+--========================================================
+local Players = game:GetService("Players")
+local LP = Players.LocalPlayer
+
+local GUI_NAME = "JinHub_BlackScreen"
+local function getPlayerGui()
+	return LP:FindFirstChildOfClass("PlayerGui") or LP:WaitForChild("PlayerGui")
+end
+
+local function ensureOverlay()
+	local pg = getPlayerGui()
+	local gui = pg:FindFirstChild(GUI_NAME)
+	if not gui then
+		gui = Instance.new("ScreenGui")
+		gui.Name = GUI_NAME
+		gui.ResetOnSpawn = false
+		gui.IgnoreGuiInset = true
+		gui.DisplayOrder = 99999
+		gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		gui.Enabled = false
+		gui.Parent = pg
+
+		-- pakai TextButton agar menyerap input (Modal-like)
+		local blocker = Instance.new("TextButton")
+		blocker.Name = "Shade"
+		blocker.BackgroundColor3 = Color3.new(0, 0, 0)
+		blocker.BackgroundTransparency = 0
+		blocker.BorderSizePixel = 0
+		blocker.Text = ""
+		blocker.AutoButtonColor = false
+		blocker.Modal = true
+		blocker.Active = true
+		blocker.Selectable = false
+		blocker.Size = UDim2.fromScale(1, 1)
+		blocker.Position = UDim2.fromScale(0, 0)
+		blocker.ZIndex = 100000
+		blocker.Parent = gui
+
+		-- optional: info kecil (bisa dihapus kalau mau full hitam polos)
+		local hint = Instance.new("TextLabel")
+		hint.Name = "Hint"
+		hint.BackgroundTransparency = 1
+		hint.AnchorPoint = Vector2.new(0, 1)
+		hint.Position = UDim2.new(0, 10, 1, -10)
+		hint.Size = UDim2.new(0, 320, 0, 20)
+		hint.ZIndex = 100001
+		hint.TextXAlignment = Enum.TextXAlignment.Left
+		hint.TextYAlignment = Enum.TextYAlignment.Center
+		hint.Font = Enum.Font.GothamSemibold
+		hint.TextSize = 13
+		hint.TextColor3 = Color3.fromRGB(160, 160, 160)
+		hint.Text = "Black Screen ON — turn off the toggle to restore"
+		hint.Parent = gui
+	end
+	return gui
+end
+
+local function setBlack(on)
+	local gui = ensureOverlay()
+	gui.Enabled = on and true or false
+end
+
+FPS2Section:Toggle({
+	Title = "Black Screen",
+	Flag = "Black_Screen",
+	Desc = "Hide Everything",
+	Default = false,
+	Callback = function(on)
+		setBlack(on)
+		if WindUI then
+		end
+	end,
+})
+
+LP.CharacterAdded:Connect(function()
+	task.defer(function()
+		local gui = ensureOverlay()
+	end)
+end)
+
+UtilityTab:Divider()
+
+--===============================================
+--BAGIAN WALKSPEED
+--===============================================
+local FPS3Section = UtilityTab:Section({
+	Title = "Player Utility",
+	Icon = "solar:user-bold",
+	IconColor = Color3.fromRGB(120, 140, 255),
+	TextSize = 18,
+	Box = true,
+	BoxBorder = true,
+	Opened = true,
+})
+
+-- Variables
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+local walkspeedEnabled = false
+local walkspeedValue = 70
+local originalWalkspeed = humanoid.WalkSpeed
+
+-- Function untuk update walkspeed
+local function updateWalkspeed()
+	if walkspeedEnabled then
+		humanoid.WalkSpeed = walkspeedValue
+	else
+		humanoid.WalkSpeed = originalWalkspeed
+	end
+end
+
+-- Handle character respawn
+player.CharacterAdded:Connect(function(char)
+	character = char
+	humanoid = char:WaitForChild("Humanoid")
+	originalWalkspeed = humanoid.WalkSpeed
+	updateWalkspeed()
+end)
+
+-- Toggle Walkspeed
+local Toggle = FPS3Section:Toggle({
+	Title = "Enable Walkspeed",
+	Flag = "Enable_Walkspeed",
+	Value = false,
+	Callback = function(state)
+		walkspeedEnabled = state
+		updateWalkspeed()
+	end,
+})
+
+-- Slider Walkspeed
+local Slider = FPS3Section:Slider({
+	Title = "Walkspeed Boost",
+	Flag = "Walkspeed_boost",
+	Step = 1,
+	Value = {
+		Min = 16,
+		Max = 300,
+		Default = 26,
+	},
+	Callback = function(value)
+		walkspeedValue = value
+		if walkspeedEnabled then
+			humanoid.WalkSpeed = value
+		end
+	end,
+})
+
+-- Loop untuk maintain walkspeed (opsional, untuk anti-detection)
+game:GetService("RunService").Heartbeat:Connect(function()
+	if walkspeedEnabled and humanoid then
+		if humanoid.WalkSpeed ~= walkspeedValue then
+			humanoid.WalkSpeed = walkspeedValue
+		end
+	end
+end)
+
+--====================================================
+--BAGIAN INFINITE JUMP SYSTEM
+--====================================================
+local infiniteJumpEnabled = false
+local userInputService = game:GetService("UserInputService")
+
+-- Function untuk handle infinite jump
+local function onJumpRequest()
+	if infiniteJumpEnabled and humanoid then
+		humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end
+
+-- Toggle Infinite Jump
+local ToggleInfiniteJump = FPS3Section:Toggle({
+	Title = "Enable Infinite Jump",
+	Value = false,
+	Flag = "Enable_Infinite",
+	Callback = function(state)
+		infiniteJumpEnabled = state
+	end,
+})
+
+-- Connect jump input
+userInputService.JumpRequest:Connect(onJumpRequest)
+
+--=====================================================
+--BAGIAN FULLBRIGHT SYSTEM
+--=====================================================
+local fullbrightEnabled = false
+local originalLighting = {}
+local lighting = game:GetService("Lighting")
+local lightingConnection
+
+-- Function untuk save original lighting
+local function saveOriginalLighting()
+	if next(originalLighting) == nil then -- Only save if not already saved
+		originalLighting.Ambient = lighting.Ambient
+		originalLighting.ColorShift_Bottom = lighting.ColorShift_Bottom
+		originalLighting.ColorShift_Top = lighting.ColorShift_Top
+		originalLighting.OutdoorAmbient = lighting.OutdoorAmbient
+		originalLighting.Brightness = lighting.Brightness
+		originalLighting.ClockTime = lighting.ClockTime
+		originalLighting.FogEnd = lighting.FogEnd
+		originalLighting.GlobalShadows = lighting.GlobalShadows
+	end
+end
+
+-- Function untuk enable fullbright
+local function enableFullbright()
+	saveOriginalLighting()
+
+	-- Apply fullbright
+	lighting.Ambient = Color3.new(1, 1, 1)
+	lighting.ColorShift_Bottom = Color3.new(1, 1, 1)
+	lighting.ColorShift_Top = Color3.new(1, 1, 1)
+	lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+	lighting.Brightness = 2
+	lighting.ClockTime = 14
+	lighting.FogEnd = 100000
+	lighting.GlobalShadows = false
+end
+
+-- Function untuk disable fullbright
+local function disableFullbright()
+	-- Restore original settings
+	if next(originalLighting) ~= nil then
+		lighting.Ambient = originalLighting.Ambient
+		lighting.ColorShift_Bottom = originalLighting.ColorShift_Bottom
+		lighting.ColorShift_Top = originalLighting.ColorShift_Top
+		lighting.OutdoorAmbient = originalLighting.OutdoorAmbient
+		lighting.Brightness = originalLighting.Brightness
+		lighting.ClockTime = originalLighting.ClockTime
+		lighting.FogEnd = originalLighting.FogEnd
+		lighting.GlobalShadows = originalLighting.GlobalShadows
+	end
+end
+
+-- Toggle Fullbright
+local ToggleFullbright = FPS3Section:Toggle({
+	Title = "Enable Fullbright",
+	Value = false,
+	Flag = "Enable_Fullbright",
+	Callback = function(state)
+		fullbrightEnabled = state
+
+		if state then
+			enableFullbright()
+
+			-- Maintain fullbright (prevent game from changing it)
+			lightingConnection = lighting.Changed:Connect(function()
+				if fullbrightEnabled then
+					task.wait()
+					enableFullbright()
+				end
+			end)
+		else
+			-- Disconnect the lighting connection
+			if lightingConnection then
+				lightingConnection:Disconnect()
+				lightingConnection = nil
+			end
+
+			disableFullbright()
+		end
+	end,
+})
+
+--====================================================
+-- CONFIG MANAGER
+--====================================================
+local HttpService = game:GetService("HttpService")
+
+local BaseFolder = Window.Folder
+local ConfigFolder = BaseFolder .. "/configs"
+local IndexFile = ConfigFolder .. "/index.json"
+local AutoLoadFile = BaseFolder .. "/autoload.txt"
+
+if makefolder then
+    if not isfolder(BaseFolder) then
+        makefolder(BaseFolder)
+    end
+    if not isfolder(ConfigFolder) then
+        makefolder(ConfigFolder)
+    end
+end
+
+local ConfigName = ""
+local SelectedConfig = nil
+local ConfigDropdown
+local AutoLoadButton
+
+local function Notify(title, text, color)
+    WindUI:Notify({
+        Title = title,
+        Content = text,
+        Duration = 3,
+        Color = color or Color3.fromRGB(100, 255, 100),
+    })
+end
+
+local function LoadIndex()
+    if isfile and isfile(IndexFile) then
+        local ok, data = pcall(function()
+            return HttpService:JSONDecode(readfile(IndexFile))
+        end)
+        if ok and type(data) == "table" then
+            return data
+        end
+    end
+    return {}
+end
+
+local function SaveIndex(t)
+    if writefile then
+        writefile(IndexFile, HttpService:JSONEncode(t))
+    end
+end
+
+local function HasConfig(name)
+    for _, v in ipairs(LoadIndex()) do
+        if v == name then
+            return true
+        end
+    end
+    return false
+end
+
+--================ AUTOLOAD =================
+local function GetAutoLoad()
+    if isfile and isfile(AutoLoadFile) then
+        return readfile(AutoLoadFile)
+    end
+    return ""
+end
+
+local function UpdateAutoLoadDesc()
+    local name = GetAutoLoad()
+    if AutoLoadButton then
+        AutoLoadButton:SetDesc(name ~= "" and ("Auto Load : " .. name) or "No Auto Load Config")
+    end
+end
+
+--================ INPUT =================
+ConfigTab:Input({
+    Title = "Config Name",
+    Callback = function(text)
+        ConfigName = text
+    end,
+})
+
+--================ DROPDOWN =================
+ConfigDropdown = ConfigTab:Dropdown({
+    Title = "Select Config",
+    Values = LoadIndex(),
+    Multi = false,
+    Callback = function(v)
+        SelectedConfig = v
+        ConfigName = v
+    end,
+})
+
+local function UpdateDropdown()
+    if ConfigDropdown and ConfigDropdown.Refresh then
+        ConfigDropdown:Refresh(LoadIndex())
+    end
+end
+
+local ConfigGroup = ConfigTab:Group({})
+
+--================ CREATE =================
+ConfigGroup:Button({
+    Title = "Create Config",
+    Callback = function()
+        if ConfigName == "" then
+            Notify("Error", "Config empty", Color3.fromRGB(255, 100, 100))
+            return
+        end
+
+        if HasConfig(ConfigName) then
+            Notify("Error", "Config already exist", Color3.fromRGB(255, 100, 100))
+            return
+        end
+
+        Window.ConfigManager:Config(ConfigName):Save()
+
+        local list = LoadIndex()
+        table.insert(list, ConfigName)
+        SaveIndex(list)
+
+        UpdateDropdown()
+
+        SelectedConfig = ConfigName
+        task.defer(function()
+            if ConfigDropdown and ConfigDropdown.Set then
+                ConfigDropdown:Set(ConfigName)
+            end
+        end)
+
+        Notify("Success", "Config created: " .. ConfigName)
+    end,
+})
+
+--================ OVERWRITE =================
+ConfigGroup:Button({
+    Title = "Overwrite Config",
+    Callback = function()
+        if not SelectedConfig then
+            Notify("Error", "selected config fist!", Color3.fromRGB(255, 100, 100))
+            return
+        end
+
+        Window.ConfigManager:Config(SelectedConfig):Save()
+        Notify("Success", "Overwrite: " .. SelectedConfig)
+    end,
+})
+
+--================ LOAD =================
+ConfigTab:Button({
+    Title = "Load Config",
+    Callback = function()
+        if not SelectedConfig then
+            Notify("Error", "selected config fist!", Color3.fromRGB(255, 100, 100))
+            return
+        end
+
+        Window.ConfigManager:Config(SelectedConfig):Load()
+        Notify("Success", "Loaded: " .. SelectedConfig)
+    end,
+})
+
+--================ AUTO LOAD BUTTON =================
+AutoLoadButton = ConfigTab:Button({
+    Title = "Set Auto Load",
+    Desc = "No Auto Load Config",
+    Callback = function()
+        if not SelectedConfig then
+            Notify("Error", "selected config fist!", Color3.fromRGB(255, 100, 100))
+            return
+        end
+
+        writefile(AutoLoadFile, SelectedConfig)
+        UpdateAutoLoadDesc()
+
+        Notify("Success", "Auto load set: " .. SelectedConfig)
+    end,
+})
+
+ConfigTab:Button({
+    Title = "Reset Auto Load",
+    Callback = function()
+        writefile(AutoLoadFile, "")
+        UpdateAutoLoadDesc()
+
+        Notify("Success", "Auto load delete")
+    end,
+})
+
+--================ REMOVE =================
+ConfigTab:Button({
+    Title = "Remove Selected",
+    Callback = function()
+        if not SelectedConfig then
+            Notify("Error", "select config first!", Color3.fromRGB(255, 100, 100))
+            return
+        end
+
+        local list = LoadIndex()
+        for i, v in ipairs(list) do
+            if v == SelectedConfig then
+                table.remove(list, i)
+                break
+            end
+        end
+
+        SaveIndex(list)
+
+        if GetAutoLoad() == SelectedConfig then
+            writefile(AutoLoadFile, "")
+        end
+
+        SelectedConfig = nil
+        ConfigName = ""
+
+        UpdateDropdown()
+        UpdateAutoLoadDesc()
+
+        Notify("Success", "Config deleted")
+    end,
+})
+
+--================ REMOVE ALL =================
+ConfigTab:Button({
+    Title = "Remove All",
+    Callback = function()
+        SaveIndex({})
+        writefile(AutoLoadFile, "")
+
+        SelectedConfig = nil
+        ConfigName = ""
+
+        UpdateDropdown()
+        UpdateAutoLoadDesc()
+
+        Notify("Success", "all config deleted!")
+    end,
+})
+
+--================ AUTO LOAD ON START =================
+task.spawn(function()
+    task.wait(1)
+
+    local auto = GetAutoLoad()
+    if auto ~= "" then
+        pcall(function()
+            Window.ConfigManager:Config(auto):Load()
+        end)
+
+        Notify("Success", "Auto loaded: " .. auto)
+    end
+
+    UpdateAutoLoadDesc()
+end)
+
+
+-- Select first tab on load
+task.spawn(function()
+	task.wait(0.15)
+	pcall(function() Window:SelectTab(1) end)
+end)
+
+-- start 
+BattleLoop:start()
+HubState.Feature.startBossHopLoop()  -- idle until autoHopBoss is enabled
+HubState._notify("Jin Hub loaded", "ok")
+print("[JinHub] loaded")
+
+-- Bootstrap
+task.defer(function()
+	-- boss-hop
+	local bs = HubState.Feature.loadBossState and HubState.Feature.loadBossState()
+	if bs and bs.autoHopBoss and bs.autoFarmBoss and bs.bossId then
+		HubState.toggles.bossTargetId = bs.bossId
+		HubState.toggles.hopCooldownSec = bs.hopCooldownSec or 20
+		
+		if hopSlider then 
+			hopSlider:Set(HubState.toggles.hopCooldownSec) 
+		end
+		
+		if bossDD then 
+			bossDD:Set(bs.bossId, false) 
+		end
+		
+		HubState.toggles.bossEnabled = true
+		if bossTgl then 
+			bossTgl:SetSilent(true) 
+		end
+		
+		HubState.toggles.autoHopBoss = true
+		if hopTgl then 
+			hopTgl:SetSilent(true) 
+		end
+		
+		if not HubState.toggles.autoSkill then 
+			HubState.toggles.autoSkill = true
+			if Toggles.autoSkill then 
+				Toggles.autoSkill:SetSilent(true) 
+			end 
+		end
+		
+		HubState.Engage.boss.start()
+		HubState._notify("Resumed boss auto-hop after server hop", "ok")
+	end
+end)
+
+if typeof(getgenv) == "function" then 
+	getgenv().JinHub = HubState 
+end
+return HubState
